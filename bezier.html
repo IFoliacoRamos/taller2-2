@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Curva de Bézier</title>
+
+    <style>
+        /* Estilo general de la página */
+        body {
+            background: #222;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Estilo del canvas donde se dibuja la curva */
+        canvas {
+            background: white;
+            margin-top: 20px;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Curva de Bézier</h1>
+<p>Arrastra los puntos para modificar la curva</p>
+
+<!-- Área de dibujo -->
+<canvas id="lienzo" width="600" height="400"></canvas>
+
+<script>
+    
+// OBTENER EL CANVAS Y CONTEXTO
+const canvas = document.getElementById("lienzo");
+const ctx = canvas.getContext("2d");
+
+// DEFINICIÓN DE LOS PUNTOS
+// p0: punto inicial
+// p1: punto de control (define la forma de la curva)
+// p2: punto final
+let p0 = {x: 100, y: 300};
+let p1 = {x: 300, y: 50};
+let p2 = {x: 500, y: 300};
+
+// Variable para saber qué punto se está arrastrando
+let puntoActivo = null;
+
+
+// FUNCIÓN DE CURVA DE BÉZIER
+
+// Calcula la posición en la curva según el parámetro t (0 a 1)
+function calcularBezier(t) {
+    let x = (1 - t)*(1 - t)*p0.x + 2*(1 - t)*t*p1.x + t*t*p2.x;
+    let y = (1 - t)*(1 - t)*p0.y + 2*(1 - t)*t*p1.y + t*t*p2.y;
+    return {x, y};
+}
+
+// FUNCIÓN PARA DIBUJAR TODO
+function dibujar() {
+    // Limpiar el canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dibujar líneas guía
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = "gray";
+    ctx.stroke();
+
+    // Dibujar la curva
+    ctx.beginPath();
+
+    // Se recorren valores de t entre 0 y 1
+    for (let t = 0; t <= 1; t += 0.01) {
+        let p = calcularBezier(t);
+
+        if (t === 0) {
+            ctx.moveTo(p.x, p.y); // punto inicial
+        } else {
+            ctx.lineTo(p.x, p.y); // trazo de la curva
+        }
+    }
+
+    ctx.strokeStyle = "blue";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Dibujar los puntos
+    dibujarPunto(p0, "red");   // inicio
+    dibujarPunto(p1, "green"); // control
+    dibujarPunto(p2, "red");   // final
+}
+
+// FUNCIÓN PARA DIBUJAR PUNTOS
+function dibujarPunto(p, color) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+// EVENTOS DEL MOUSE
+
+// Detecta cuando se hace clic
+canvas.addEventListener("mousedown", function(e) {
+    let rect = canvas.getBoundingClientRect();
+    let mx = e.clientX - rect.left;
+    let my = e.clientY - rect.top;
+
+    // Verifica si el clic está cerca de algún punto
+    [p0, p1, p2].forEach(p => {
+        let dx = p.x - mx;
+        let dy = p.y - my;
+
+        if (Math.sqrt(dx*dx + dy*dy) < 10) {
+            puntoActivo = p; // selecciona el punto
+        }
+    });
+});
+
+// Se ejecuta cuando se mueve el mouse
+canvas.addEventListener("mousemove", function(e) {
+    if (puntoActivo) {
+        let rect = canvas.getBoundingClientRect();
+
+        // Actualiza la posición del punto arrastrado
+        puntoActivo.x = e.clientX - rect.left;
+        puntoActivo.y = e.clientY - rect.top;
+
+        dibujar(); // redibuja la curva
+    }
+});
+
+// Cuando se suelta el mouse
+canvas.addEventListener("mouseup", function() {
+    puntoActivo = null;
+});
+
+// Si el mouse sale del canvas
+canvas.addEventListener("mouseleave", function() {
+    puntoActivo = null;
+});
+
+
+// DIBUJO INICIAL
+dibujar();
+</script>
+
+</body>
+</html>
